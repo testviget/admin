@@ -69,9 +69,9 @@
     <div style="display:flex; gap:6px;"><input type="text" id="codeInput" placeholder="Код доступа" style="flex:1;"><button id="genBtn" style="width:140px;">🎲 Сгенерировать</button></div>
     
 <div style="display:flex; gap:6px;">
-  <input type="number" id="monthsInput" min="1" placeholder="Месяцы" style="flex:1;">
-  <input type="number" id="daysInput" min="1" placeholder="Дни" style="flex:1;">
-  <input type="number" id="minutesInput" min="1" placeholder="Минуты" style="flex:1;">
+  <input type="number" id="monthsInput" min="1" min="1" placeholder="Месяцы" style="flex:1;">
+  <input type="number" id="daysInput" min="1" min="1" placeholder="Дни" style="flex:1;">
+  <input type="number" id="minutesInput" min="1" min="1" placeholder="Минуты" style="flex:1;">
 </div>
 <button id="addBtn" style="margin-top:10px; width:100%;">Добавить</button>
 
@@ -129,12 +129,66 @@
       document.getElementById('monthsInput').value = '';
       document.getElementById('daysInput').value = '';
       document.getElementById('minutesInput').value = '';
-      loadCodes();
+      
+    
+  
+  
+  
+  // Разрешить ввод только цифр >= 1, очищать любые символы
+  const inputs = ['monthsInput', 'daysInput', 'minutesInput'];
+  inputs.forEach(id => {
+    const input = document.getElementById(id);
+
+    input.addEventListener('keydown', (e) => {
+      const isDigit = /^[0-9]$/.test(e.key);
+      const isFirstChar = input.selectionStart === 0;
+      if (!isDigit || (e.key === '0' && isFirstChar)) {
+        e.preventDefault();
+      }
+    });
+
+    input.addEventListener('input', () => {
+      input.value = input.value.replace(/[^0-9]/g, ''); // удаляем все нецифры
+      if (input.value && parseInt(input.value) < 1) {
+        input.value = '';
+      }
+    });
+  });
+
+
+loadCodes();
     }
 
     async function deleteCode(id) {
       await supabase.from('codes').delete().eq('id', id);
-      loadCodes();
+      
+    
+  
+  
+  
+  // Разрешить ввод только цифр >= 1, очищать любые символы
+  const inputs = ['monthsInput', 'daysInput', 'minutesInput'];
+  inputs.forEach(id => {
+    const input = document.getElementById(id);
+
+    input.addEventListener('keydown', (e) => {
+      const isDigit = /^[0-9]$/.test(e.key);
+      const isFirstChar = input.selectionStart === 0;
+      if (!isDigit || (e.key === '0' && isFirstChar)) {
+        e.preventDefault();
+      }
+    });
+
+    input.addEventListener('input', () => {
+      input.value = input.value.replace(/[^0-9]/g, ''); // удаляем все нецифры
+      if (input.value && parseInt(input.value) < 1) {
+        input.value = '';
+      }
+    });
+  });
+
+
+loadCodes();
     }
 
     function generateCode() {
@@ -156,7 +210,34 @@
       }
     });
 
-    loadCodes();
+    
+    
+  
+  
+  
+  // Разрешить ввод только цифр >= 1, очищать любые символы
+  const inputs = ['monthsInput', 'daysInput', 'minutesInput'];
+  inputs.forEach(id => {
+    const input = document.getElementById(id);
+
+    input.addEventListener('keydown', (e) => {
+      const isDigit = /^[0-9]$/.test(e.key);
+      const isFirstChar = input.selectionStart === 0;
+      if (!isDigit || (e.key === '0' && isFirstChar)) {
+        e.preventDefault();
+      }
+    });
+
+    input.addEventListener('input', () => {
+      input.value = input.value.replace(/[^0-9]/g, ''); // удаляем все нецифры
+      if (input.value && parseInt(input.value) < 1) {
+        input.value = '';
+      }
+    });
+  });
+
+
+loadCodes();
   </script>
 </body>
 </html>
