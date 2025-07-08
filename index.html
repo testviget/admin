@@ -1,32 +1,34 @@
+
 <!DOCTYPE html>
+
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <title>Панель администратора</title>
-  <style>
+<meta charset="utf-8"/>
+<title>Панель администратора</title>
+<style>
     body {
       font-family: sans-serif;
-      background: #f4f5f7;
+      background: #121212;
+      color: #ffffff;
       display: flex;
       justify-content: center;
       margin-top: 40px;
     }
     .panel {
-      background: white;
+      background: #1e1e1e;
       padding: 20px;
       border-radius: 12px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      box-shadow: 0 0 10px rgba(255,255,255,0.1);
       width: 400px;
     }
-    .panel h2 {
-      text-align: center;
-    }
     input, button {
-      width: 100%;
       padding: 10px;
       margin-top: 10px;
       border-radius: 6px;
-      border: 1px solid #ccc;
+      border: 1px solid #555;
+      box-sizing: border-box;
+      background-color: #2c2c2c;
+      color: #fff;
     }
     button {
       background: #28a745;
@@ -37,9 +39,22 @@
     button:hover {
       background: #218838;
     }
+    .delete-btn {
+      background: #dc3545;
+    }
+    .delete-btn:hover {
+      background: #c82333;
+    }
+    .edit-btn {
+      background: #ffc107;
+      color: black;
+    }
+    .edit-btn:hover {
+      background: #e0a800;
+    }
     .code-item {
-      background: #fff;
-      border: 1px solid #ccc;
+      background: #2a2a2a;
+      border: 1px solid #555;
       border-radius: 6px;
       padding: 10px;
       margin-top: 10px;
@@ -47,41 +62,66 @@
       justify-content: space-between;
       align-items: center;
     }
-    .delete-btn {
-      background: #dc3545;
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 999;
+      left: 0; top: 0;
+      width: 100%; height: 100%;
+      background-color: rgba(0,0,0,0.7);
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      background-color: #1e1e1e;
+      padding: 20px;
+      border-radius: 12px;
+      width: 300px;
+      text-align: center;
       color: white;
-      border: none;
-      border-radius: 4px;
-      padding: 6px 8px;
-      font-size: 12px;
-      width: auto;
-      white-space: nowrap;
     }
-    .delete-btn:hover {
-      background: #c82333;
+    .modal input {
+      width: 80px;
+      margin: 5px;
+      background-color: #2c2c2c;
+      color: white;
+      border: 1px solid #555;
     }
-  </style>
+</style>
 </head>
 <body>
-  <div class="panel">
-    <h2>Панель создания кода</h2>
-    <div style="display:flex; gap:6px;"><input type="text" id="codeInput" placeholder="Код доступа" style="flex:1;"><button id="genBtn" style="width:140px;">🎲 Сгенерировать</button></div>
-    <div style="display:flex; gap:6px;">
-      <input type="number" id="monthsInput" min="1" placeholder="Месяцы" style="flex:1;">
-      <input type="number" id="daysInput" min="1" placeholder="Дни" style="flex:1;">
-      <input type="number" id="minutesInput" min="1" placeholder="Минуты" style="flex:1;">
-    </div>
-    <button id="addBtn" style="margin-top:10px; width:100%;">Добавить</button>
-    <h3>Список кодов:</h3>
-    <div id="codeList"></div>
-  </div>
-
-  <script type="module">
+<div class="panel">
+<h2>Панель создания кода</h2>
+<div style="display:flex; gap:6px;">
+<input id="codeInput" placeholder="Код доступа" style="flex:1;" type="text"/>
+<button id="genBtn" style="width:140px;">🎲 Сгенерировать</button>
+</div>
+<div style="display:flex; gap:6px;">
+<input id="monthsInput" min="1" placeholder="Месяцы" style="width: 100%; max-width: 33%;" type="number"/>
+<input id="daysInput" min="1" placeholder="Дни" style="width: 100%; max-width: 33%;" type="number"/>
+<input id="minutesInput" min="1" placeholder="Минуты" style="width: 100%; max-width: 33%;" type="number"/>
+</div>
+<button id="addBtn" style="margin-top:10px; width:100%;">Добавить</button>
+<h3>Список кодов:</h3>
+<div id="codeList"></div>
+</div>
+<div class="modal" id="editModal">
+<div class="modal-content">
+<h3>Редактировать срок</h3>
+<input id="editMonths" min="1" placeholder="Мес." type="number"/>
+<input id="editDays" min="1" placeholder="Дни" type="number"/>
+<input id="editMinutes" min="1" placeholder="Мин." type="number"/><br/>
+<button id="saveEditBtn">💾 Сохранить</button>
+</div>
+</div>
+<script type="module">
     import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
     const supabase = createClient(
       'https://vhkouevuopjvsjpaxsyb.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZoa291ZXZ1b3BqdnNqcGF4c3liIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE5MTcxNDgsImV4cCI6MjA2NzQ5MzE0OH0.rle3WfPn1_aa5pKT53VJev19nOAM1msCRg0U7jLR9XI'
     );
+
+    let currentEditId = null;
 
     function formatRemainingTime(ms) {
       if (ms <= 0) return '⛔ Срок истёк';
@@ -113,7 +153,10 @@
         div.className = 'code-item';
         div.innerHTML = `
           <div><b>${item.code}</b> — до ${expires.toLocaleDateString('ru-RU')}<br>(${displayTime})</div>
-          <button class="delete-btn" data-id="${item.id}">Удалить</button>
+          <div style="display:flex; gap:6px;">
+            <button class="edit-btn" data-id="${item.id}">✏</button>
+            <button class="delete-btn" data-id="${item.id}">Удалить</button>
+          </div>
         `;
         list.appendChild(div);
       });
@@ -124,9 +167,7 @@
       const months = parseInt(document.getElementById('monthsInput').value) || 0;
       const days = parseInt(document.getElementById('daysInput').value) || 0;
       const minutes = parseInt(document.getElementById('minutesInput').value) || 0;
-
-      if (!code) return alert('Введите код доступа.');
-      if (months < 1 && days < 1 && minutes < 1) return alert('Укажите срок действия.');
+      if (!code || (months < 1 && days < 1 && minutes < 1)) return alert('Введите код и срок.');
 
       const now = new Date();
       const expires = new Date(now);
@@ -135,11 +176,8 @@
       expires.setMinutes(expires.getMinutes() + minutes);
 
       await supabase.from('codes').insert({ code, expires_at: expires.toISOString() });
-
       document.getElementById('codeInput').value = '';
-      document.getElementById('monthsInput').value = '';
-      document.getElementById('daysInput').value = '';
-      document.getElementById('minutesInput').value = '';
+      ['monthsInput','daysInput','minutesInput'].forEach(id => document.getElementById(id).value = '');
       loadCodes();
     }
 
@@ -148,41 +186,64 @@
       loadCodes();
     }
 
-    function generateCode() {
-      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-      let result = '';
-      for (let i = 0; i < 10; i++) {
-        result += chars.charAt(Math.floor(Math.random() * chars.length));
-      }
-      document.getElementById('codeInput').value = result;
+    function openEditModal(id) {
+      currentEditId = id;
+      document.getElementById('editModal').style.display = 'flex';
     }
 
-    function setupInputValidation() {
-      const inputs = ['monthsInput', 'daysInput', 'minutesInput'];
-      inputs.forEach(id => {
-        const input = document.getElementById(id);
-        input.addEventListener('keydown', (e) => {
-          const isDigit = /^[0-9]$/.test(e.key);
-          const isFirstChar = input.selectionStart === 0;
-          if (!isDigit || (e.key === '0' && isFirstChar)) e.preventDefault();
-        });
-        input.addEventListener('input', () => {
-          input.value = input.value.replace(/[^0-9]/g, '');
-          if (input.value && parseInt(input.value) < 1) input.value = '';
-        });
-      });
-    }
+    document.getElementById('saveEditBtn').addEventListener('click', async () => {
+      const months = parseInt(document.getElementById('editMonths').value) || 0;
+      const days = parseInt(document.getElementById('editDays').value) || 0;
+      const minutes = parseInt(document.getElementById('editMinutes').value) || 0;
+      const now = new Date();
+      const expires = new Date(now);
+      expires.setMonth(now.getMonth() + months);
+      expires.setDate(expires.getDate() + days);
+      expires.setMinutes(expires.getMinutes() + minutes);
+      await supabase.from('codes').update({ expires_at: expires.toISOString() }).eq('id', currentEditId);
+      document.getElementById('editModal').style.display = 'none';
+      loadCodes();
+    });
 
-    document.getElementById('genBtn').addEventListener('click', generateCode);
-    document.getElementById('addBtn').addEventListener('click', addCode);
-    document.getElementById('codeList').addEventListener('click', (e) => {
-      if (e.target.classList.contains('delete-btn')) {
-        deleteCode(e.target.dataset.id);
+    document.getElementById('editModal').addEventListener('click', (e) => {
+      if (e.target.id === 'editModal') {
+        e.target.style.display = 'none';
       }
     });
 
+    document.getElementById('codeList').addEventListener('click', (e) => {
+      const id = e.target.dataset.id;
+      if (e.target.classList.contains('delete-btn')) deleteCode(id);
+      if (e.target.classList.contains('edit-btn')) openEditModal(id);
+    });
+
+    document.getElementById('genBtn').addEventListener('click', () => {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      let code = '';
+      for (let i = 0; i < 10; i++) code += chars.charAt(Math.floor(Math.random() * chars.length));
+      document.getElementById('codeInput').value = code;
+    });
+
     setupInputValidation();
-    loadCodes();
+    
+function setupInputValidation() {
+  const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab'];
+  const inputs = ['monthsInput','daysInput','minutesInput','editMonths','editDays','editMinutes'];
+
+  inputs.forEach(id => {
+    const input = document.getElementById(id);
+    input.addEventListener('keydown', (e) => {
+      if (!/^[0-9]$/.test(e.key) && !allowedKeys.includes(e.key)) {
+        e.preventDefault();
+      } else if (e.key === '0' && input.value === '') {
+        e.preventDefault();
+      }
+    });
+  });
+}
+
+setupInputValidation();
+loadCodes();
   </script>
 </body>
 </html>
