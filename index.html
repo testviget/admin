@@ -3,102 +3,158 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>Админка Supabase (Fixed)</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <title>Панель администратора</title>
   <style>
-    body { font-family: Arial, sans-serif; background: #f2f3f5; padding: 40px; display: flex; flex-direction: column; align-items: center; }
-    #adminPanel { background: white; padding: 30px; border-radius: 10px; max-width: 400px; width: 100%; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-    input, button { padding: 10px; margin-top: 10px; width: 100%; font-size: 16px; border-radius: 6px; }
-    button { background: #4CAF50; color: white; border: none; cursor: pointer; }
-    button:hover { background: #45a049; }
-    ul { padding: 0; list-style: none; width: 100%; }
-    li { background: #fff; padding: 8px 12px; border-radius: 6px; border: 1px solid #ccc; display: flex; justify-content: space-between; margin-bottom: 6px; }
-    .small-btn { padding: 4px 8px; font-size: 13px; border-radius: 4px; cursor: pointer; margin-left: 6px; }
-    .del-btn { background: #e74c3c; color: #fff; }
-    .edit-btn { background: #f39c12; color: #fff; }
+    body {
+      font-family: sans-serif;
+      background: #f4f5f7;
+      display: flex;
+      justify-content: center;
+      margin-top: 40px;
+    }
+    .panel {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      width: 400px;
+    }
+    .panel h2 {
+      text-align: center;
+    }
+    input, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    button {
+      background: #28a745;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #218838;
+    }
+    .code-item {
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 10px;
+      margin-top: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .delete-btn {
+      background: #dc3545;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 6px 8px;
+      font-size: 12px;
+      width: auto;
+      white-space: nowrap;
+    }
+    .delete-btn:hover {
+      background: #c82333;
+    }
   </style>
 </head>
 <body>
-  <div id="adminPanel">
+  <div class="panel">
     <h2>Панель создания кода</h2>
-    <div style="display: flex; gap: 10px;">
-      <input type="text" id="codeInput" placeholder="Код доступа">
-      <button id="generateButton" style="width: 60px;">🎲</button>
-    </div>
-    <input type="number" id="monthsInput" placeholder="Срок (мес)" min="0">
-    <input type="number" id="daysInput" placeholder="Срок (дн)" min="0">
-    <input type="number" id="minutesInput" placeholder="Срок (мин)" min="0">
-    <button id="addButton">Добавить</button>
+    <div style="display:flex; gap:6px;"><input type="text" id="codeInput" placeholder="Код доступа" style="flex:1;"><button id="genBtn" style="width:140px;">🎲 Сгенерировать</button></div>
+    
+<div style="display:flex; gap:6px;">
+  <input type="number" id="monthsInput" min="1" placeholder="Месяцы" style="flex:1;">
+  <input type="number" id="daysInput" min="1" placeholder="Дни" style="flex:1;">
+  <input type="number" id="minutesInput" min="1" placeholder="Минуты" style="flex:1;">
+</div>
+<button id="addBtn" style="margin-top:10px; width:100%;">Добавить</button>
 
     <h3>Список кодов:</h3>
-    <ul id="codeList"></ul>
+    <div id="codeList"></div>
   </div>
 
-  <script>
-    const supabase = supabase.createClient(
-      "https://vhkouevuopjvsjpaxsyb.supabase.co",
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZoa291ZXZ1b3BqdnNqcGF4c3liIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE5MTcxNDgsImV4cCI6MjA2NzQ5MzE0OH0.rle3WfPn1_aa5pKT53VJev19nOAM1msCRg0U7jLR9XI"
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+    const supabase = createClient(
+      'https://vhkouevuopjvsjpaxsyb.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZoa291ZXZ1b3BqdnNqcGF4c3liIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE5MTcxNDgsImV4cCI6MjA2NzQ5MzE0OH0.rle3WfPn1_aa5pKT53VJev19nOAM1msCRg0U7jLR9XI'
     );
 
-    const codeInput = document.getElementById("codeInput");
-    const daysInput = document.getElementById("daysInput");
-    const monthsInput = document.getElementById("monthsInput");
-    const minutesInput = document.getElementById("minutesInput");
-    const addButton = document.getElementById("addButton");
-    const codeList = document.getElementById("codeList");
-    const generateButton = document.getElementById("generateButton");
-
-    generateButton.onclick = () => {
-      const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-      let result = "";
-      for (let i = 0; i < 10; i++) result += chars.charAt(Math.floor(Math.random() * chars.length));
-      codeInput.value = result;
-    };
-
-    addButton.onclick = async () => {
-      const code = codeInput.value.trim();
-      const days = parseInt(daysInput.value) || 0;
-      const months = parseInt(monthsInput.value) || 0;
-      const minutes = parseInt(minutesInput.value) || 0;
-      if (!code || (days === 0 && months === 0 && minutes === 0)) return alert("⚠️ Укажите срок действия");
-
-      const now = new Date();
-      now.setMonth(now.getMonth() + months);
-      now.setDate(now.getDate() + days);
-      now.setMinutes(now.getMinutes() + minutes);
-      const expiresAtISO = now.toISOString();
-
-      await supabase.from("codes").insert([{ code, expires_at: expiresAtISO }]);
-      codeInput.value = "";
-      daysInput.value = "";
-      monthsInput.value = "";
-      minutesInput.value = "";
-      loadCodes();
-    };
-
     async function loadCodes() {
-      const { data } = await supabase.from("codes").select("*").order("expires_at", { ascending: false });
-      codeList.innerHTML = "";
+      const { data, error } = await supabase.from('codes').select('*').order('expires_at', { ascending: false });
+      const list = document.getElementById('codeList');
+      list.innerHTML = '';
+      if (error) {
+        console.error("Ошибка при загрузке кодов:", error);
+        return;
+      }
       data.forEach(item => {
-        const li = document.createElement("li");
-        const date = new Date(item.expires_at);
+        const expires = new Date(item.expires_at);
         const now = new Date();
-        const diff = Math.floor((date - now) / (1000 * 60 * 60 * 24));
-        const expText = date.toLocaleDateString("ru-RU") + (diff >= 0 ? ` (${diff} дн.)` : " (истек)");
-        li.innerHTML = `${item.code} — до ${expText}`;
-
-        const delBtn = document.createElement("button");
-        delBtn.textContent = "Удалить";
-        delBtn.className = "small-btn del-btn";
-        delBtn.onclick = async () => {
-          await supabase.from("codes").delete().eq("code", item.code);
-          loadCodes();
-        };
-
-        li.appendChild(delBtn);
-        codeList.appendChild(li);
+        const daysLeft = Math.floor((expires - now) / (1000 * 60 * 60 * 24));
+        const div = document.createElement('div');
+        div.className = 'code-item';
+        div.innerHTML = `
+          <div><b>${item.code}</b> — до ${expires.toLocaleDateString('ru-RU')}<br>(${daysLeft} дн.)</div>
+          <button class="delete-btn" data-id="${item.id}">Удалить</button>
+        `;
+        list.appendChild(div);
       });
     }
+
+    async function addCode() {
+      const code = document.getElementById('codeInput').value.trim();
+      const months = parseInt(document.getElementById('monthsInput').value) || 0;
+      const days = parseInt(document.getElementById('daysInput').value) || 0;
+      const minutes = parseInt(document.getElementById('minutesInput').value) || 0;
+
+      if (!code) return alert('Введите код доступа.');
+      if (months < 1 && days < 1 && minutes < 1) return alert('Укажите срок действия.');
+
+      const now = new Date();
+      const expires = new Date(now);
+      expires.setMonth(now.getMonth() + months);
+      expires.setDate(expires.getDate() + days);
+      expires.setMinutes(expires.getMinutes() + minutes);
+
+      await supabase.from('codes').insert({ code, expires_at: expires.toISOString() });
+      document.getElementById('codeInput').value = '';
+      document.getElementById('monthsInput').value = '';
+      document.getElementById('daysInput').value = '';
+      document.getElementById('minutesInput').value = '';
+      loadCodes();
+    }
+
+    async function deleteCode(id) {
+      await supabase.from('codes').delete().eq('id', id);
+      loadCodes();
+    }
+
+    function generateCode() {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      let result = '';
+      for (let i = 0; i < 10; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      document.getElementById('codeInput').value = result;
+    }
+
+    // Event Listeners
+    document.getElementById('genBtn').addEventListener('click', generateCode);
+    document.getElementById('addBtn').addEventListener('click', addCode);
+    document.getElementById('codeList').addEventListener('click', (e) => {
+      if (e.target.classList.contains('delete-btn')) {
+        const id = e.target.dataset.id;
+        deleteCode(id);
+      }
+    });
 
     loadCodes();
   </script>
