@@ -1,6 +1,4 @@
-
 <!DOCTYPE html>
-
 <html lang="ru">
 <head>
 <meta charset="utf-8"/>
@@ -115,117 +113,134 @@
 </div>
 </div>
 <script type="module">
-    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
-    const supabase = createClient(
-      'https://vhkouevuopjvsjpaxsyb.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZoa291ZXZ1b3BqdnNqcGF4c3liIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE5MTcxNDgsImV4cCI6MjA2NzQ5MzE0OH0.rle3WfPn1_aa5pKT53VJev19nOAM1msCRg0U7jLR9XI'
-    );
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+const supabase = createClient(
+  'https://vhkouevuopjvsjpaxsyb.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZoa291ZXZ1b3BqdnNqcGF4c3liIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE5MTcxNDgsImV4cCI6MjA2NzQ5MzE0OH0.rle3WfPn1_aa5pKT53VJev19nOAM1msCRg0U7jLR9XI'
+);
 
-    let currentEditId = null;
+let currentEditId = null;
 
-    function formatRemainingTime(ms) {
-      if (ms <= 0) return '⛔ Срок истёк';
-      const mins = Math.floor(ms / 60000);
-      const hours = Math.floor(ms / 3600000);
-      const days = Math.floor(ms / 86400000);
-      if (mins < 60) return `${mins} мин.`;
-      if (hours < 24) return `${hours} ч.`;
-      if (days >= 365) return `${Math.floor(days / 365)} г.`;
-      if (days >= 30) return `${Math.floor(days / 30)} мес.`;
-      return `${days} дн.`;
-    }
+function formatRemainingTime(ms) {
+  if (ms <= 0) return '⛔ Срок истёк';
+  const mins = Math.floor(ms / 60000);
+  const hours = Math.floor(ms / 3600000);
+  const days = Math.floor(ms / 86400000);
+  if (mins < 60) return `${mins} мин.`;
+  if (hours < 24) return `${hours} ч.`;
+  if (days >= 365) return `${Math.floor(days / 365)} г.`;
+  if (days >= 30) return `${Math.floor(days / 30)} мес.`;
+  return `${days} дн.`;
+}
 
-    async function loadCodes() {
-      const { data, error } = await supabase.from('codes').select('*').order('expires_at', { ascending: false });
-      const list = document.getElementById('codeList');
-      list.innerHTML = '';
-      if (error) {
-        console.error("Ошибка при загрузке кодов:", error);
-        return;
-      }
+async function loadCodes() {
+  const { data, error } = await supabase.from('codes').select('*').order('expires_at', { ascending: false });
+  const list = document.getElementById('codeList');
+  list.innerHTML = '';
+  if (error) {
+    console.error("Ошибка при загрузке кодов:", error);
+    return;
+  }
 
-      const now = new Date();
-      data.forEach(item => {
-        const expires = new Date(item.expires_at);
-        const remaining = expires - now;
-        const displayTime = formatRemainingTime(remaining);
-        const div = document.createElement('div');
-        div.className = 'code-item';
-        div.innerHTML = `
-          <div><b>${item.code}</b> — до ${expires.toLocaleDateString('ru-RU')}<br>(${displayTime})</div>
-          <div style="display:flex; gap:6px;">
-            <button class="edit-btn" data-id="${item.id}">✏</button>
-            <button class="delete-btn" data-id="${item.id}">Удалить</button>
-          </div>
-        `;
-        list.appendChild(div);
-      });
-    }
+  const now = new Date();
+  data.forEach(item => {
+    const expires = new Date(item.expires_at);
+    const remaining = expires - now;
+    const displayTime = formatRemainingTime(remaining);
+    const div = document.createElement('div');
+    div.className = 'code-item';
+    div.innerHTML = `
+      <div><b>${item.code}</b> — до ${expires.toLocaleDateString('ru-RU')}<br>(${displayTime})</div>
+      <div style="display:flex; gap:6px;">
+        <button class="edit-btn" data-id="${item.id}">✏</button>
+        <button class="delete-btn" data-id="${item.id}">Удалить</button>
+      </div>
+    `;
+    list.appendChild(div);
+  });
+}
 
-    async function addCode() {
-      const code = document.getElementById('codeInput').value.trim();
-      const months = parseInt(document.getElementById('monthsInput').value) || 0;
-      const days = parseInt(document.getElementById('daysInput').value) || 0;
-      const minutes = parseInt(document.getElementById('minutesInput').value) || 0;
-      if (!code || (months < 1 && days < 1 && minutes < 1)) return alert('Введите код и срок.');
+document.getElementById('addBtn').addEventListener('click', () => {
+  console.log('🟢 Кнопка "Добавить" нажата');
+  addCode();
+});
 
-      const now = new Date();
-      const expires = new Date(now);
-      expires.setMonth(now.getMonth() + months);
-      expires.setDate(expires.getDate() + days);
-      expires.setMinutes(expires.getMinutes() + minutes);
+async function addCode() {
+  console.log('▶ Вызвана функция addCode()');
+  const code = document.getElementById('codeInput').value.trim();
+  const months = parseInt(document.getElementById('monthsInput').value) || 0;
+  const days = parseInt(document.getElementById('daysInput').value) || 0;
+  const minutes = parseInt(document.getElementById('minutesInput').value) || 0;
 
-      await supabase.from('codes').insert({ code, expires_at: expires.toISOString() });
-      document.getElementById('codeInput').value = '';
-      ['monthsInput','daysInput','minutesInput'].forEach(id => document.getElementById(id).value = '');
-      loadCodes();
-    }
+  if (!code || (months < 1 && days < 1 && minutes < 1)) {
+    alert('Введите код и срок.');
+    return;
+  }
 
-    async function deleteCode(id) {
-      await supabase.from('codes').delete().eq('id', id);
-      loadCodes();
-    }
+  const now = new Date();
+  const expires = new Date(now);
+  expires.setMonth(now.getMonth() + months);
+  expires.setDate(expires.getDate() + days);
+  expires.setMinutes(expires.getMinutes() + minutes);
 
-    function openEditModal(id) {
-      currentEditId = id;
-      document.getElementById('editModal').style.display = 'flex';
-    }
+  console.log('📦 Отправка в Supabase:', { code, expires });
 
-    document.getElementById('saveEditBtn').addEventListener('click', async () => {
-      const months = parseInt(document.getElementById('editMonths').value) || 0;
-      const days = parseInt(document.getElementById('editDays').value) || 0;
-      const minutes = parseInt(document.getElementById('editMinutes').value) || 0;
-      const now = new Date();
-      const expires = new Date(now);
-      expires.setMonth(now.getMonth() + months);
-      expires.setDate(expires.getDate() + days);
-      expires.setMinutes(expires.getMinutes() + minutes);
-      await supabase.from('codes').update({ expires_at: expires.toISOString() }).eq('id', currentEditId);
-      document.getElementById('editModal').style.display = 'none';
-      loadCodes();
-    });
+  const { error } = await supabase.from('codes').insert({ code, expires_at: expires.toISOString() });
 
-    document.getElementById('editModal').addEventListener('click', (e) => {
-      if (e.target.id === 'editModal') {
-        e.target.style.display = 'none';
-      }
-    });
+  if (error) {
+    console.error('❌ Ошибка при добавлении кода:', error);
+    alert('Ошибка при добавлении кода. Проверь консоль.');
+  } else {
+    console.log('✅ Код успешно добавлен');
+    document.getElementById('codeInput').value = '';
+    ['monthsInput','daysInput','minutesInput'].forEach(id => document.getElementById(id).value = '');
+    loadCodes();
+  }
+}
 
-    document.getElementById('codeList').addEventListener('click', (e) => {
-      const id = e.target.dataset.id;
-      if (e.target.classList.contains('delete-btn')) deleteCode(id);
-      if (e.target.classList.contains('edit-btn')) openEditModal(id);
-    });
+async function deleteCode(id) {
+  await supabase.from('codes').delete().eq('id', id);
+  loadCodes();
+}
 
-    document.getElementById('genBtn').addEventListener('click', () => {
-      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-      let code = '';
-      for (let i = 0; i < 10; i++) code += chars.charAt(Math.floor(Math.random() * chars.length));
-      document.getElementById('codeInput').value = code;
-    });
+function openEditModal(id) {
+  currentEditId = id;
+  document.getElementById('editModal').style.display = 'flex';
+}
 
-    setupInputValidation();
-    
+document.getElementById('saveEditBtn').addEventListener('click', async () => {
+  const months = parseInt(document.getElementById('editMonths').value) || 0;
+  const days = parseInt(document.getElementById('editDays').value) || 0;
+  const minutes = parseInt(document.getElementById('editMinutes').value) || 0;
+  const now = new Date();
+  const expires = new Date(now);
+  expires.setMonth(now.getMonth() + months);
+  expires.setDate(expires.getDate() + days);
+  expires.setMinutes(expires.getMinutes() + minutes);
+  await supabase.from('codes').update({ expires_at: expires.toISOString() }).eq('id', currentEditId);
+  document.getElementById('editModal').style.display = 'none';
+  loadCodes();
+});
+
+document.getElementById('editModal').addEventListener('click', (e) => {
+  if (e.target.id === 'editModal') {
+    e.target.style.display = 'none';
+  }
+});
+
+document.getElementById('codeList').addEventListener('click', (e) => {
+  const id = e.target.dataset.id;
+  if (e.target.classList.contains('delete-btn')) deleteCode(id);
+  if (e.target.classList.contains('edit-btn')) openEditModal(id);
+});
+
+document.getElementById('genBtn').addEventListener('click', () => {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let code = '';
+  for (let i = 0; i < 10; i++) code += chars.charAt(Math.floor(Math.random() * chars.length));
+  document.getElementById('codeInput').value = code;
+});
+
 function setupInputValidation() {
   const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab'];
   const inputs = ['monthsInput','daysInput','minutesInput','editMonths','editDays','editMinutes'];
@@ -244,6 +259,6 @@ function setupInputValidation() {
 
 setupInputValidation();
 loadCodes();
-  </script>
+</script>
 </body>
 </html>
