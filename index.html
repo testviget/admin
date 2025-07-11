@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 
 <!-- saved from url=(0034)https://testviget.github.io/admin/ -->
-<html lang="ru"><script id="youtube-hd-fjdmkanbdloodhegphphhklnjfngoffa">var ythdlog = () => {};;var ythderror = () => {};</script><head><meta content="text/html; charset=utf-8" http-equiv="Content-Type"/>
+<html lang="ru"><script id="youtube-hd-fjdmkanbdloodhegphphhklnjfngoffa">var ythdlog = () => {};;var ythderror = () => {};</script><head><meta content="width=device-width, initial-scale=1" name="viewport"/><meta content="text/html; charset=utf-8" http-equiv="Content-Type"/>
 <title>Панель администратора</title>
 <style>
     body {
@@ -85,6 +85,31 @@
       color: white;
       border: 1px solid #555;
     }
+
+@media (max-width: 480px) {
+  body {
+    margin-top: 20px;
+    padding: 10px;
+  }
+  .panel {
+    width: 100%;
+    padding: 15px;
+  }
+  input, button {
+    font-size: 16px;
+    width: 100% !important;
+  }
+  .code-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .code-item div:last-child {
+    margin-top: 10px;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+  }
+}
 </style>
 <style>.WJG9Q3dW2L7uh_9_D1Kf {
   margin: 10px;
