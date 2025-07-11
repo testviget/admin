@@ -403,9 +403,9 @@
 <button id="saveEditBtn">💾 Сохранить</button>
 </div>
 </div>
-<script type="module">
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
-const supabase = createClient(
+
+<span id="copylAddress" style="display: inline-block; position: absolute; left: -9999em;"></span><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script><script>
+const supabase = supabase.createClient(
   'https://vhkouevuopjvsjpaxsyb.supabase.co',
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZoa291ZXZ1b3BqdnNqcGF4c3liIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE5MTcxNDgsImV4cCI6MjA2NzQ5MzE0OH0.rle3WfPn1_aa5pKT53VJev19nOAM1msCRg0U7jLR9XI'
 );
@@ -417,13 +417,12 @@ function formatRemainingTime(ms) {
   const mins = Math.floor(ms / 60000);
   const hours = Math.floor(ms / 3600000);
   const days = Math.ceil(ms / 86400000);
-  if (mins < 60) return `${mins} мин.`;
-  if (hours < 24) return `${hours} ч.`;
-  if (days >= 365) return `${Math.floor(days / 365)} г.`;
-  if (days >= 30) return `${Math.floor(days / 30)} мес.`;
-  return `${days} дн.`;
+  if (mins < 60) return \`\${mins} мин.\`;
+  if (hours < 24) return \`\${hours} ч.\`;
+  if (days >= 365) return \`\${Math.floor(days / 365)} г.\`;
+  if (days >= 30) return \`\${Math.floor(days / 30)} мес.\`;
+  return \`\${days} дн.\`;
 }
-
 
 async function loadCodes() {
   const { data, error } = await supabase.from('codes').select('*').order('expires_at', { ascending: false });
@@ -435,14 +434,11 @@ async function loadCodes() {
   }
 
   const now = new Date();
-
-  // Удалим просроченные коды
   const expiredCodes = data.filter(item => new Date(item.expires_at) <= now);
   for (const code of expiredCodes) {
     await supabase.from('codes').delete().eq('id', code.id);
   }
 
-  // Только актуальные коды
   const freshData = data.filter(item => new Date(item.expires_at) > now);
 
   freshData.forEach(item => {
@@ -451,25 +447,22 @@ async function loadCodes() {
     const displayTime = formatRemainingTime(remaining);
     const div = document.createElement('div');
     div.className = 'code-item';
-    div.innerHTML = `
-      <div><b>${item.code}</b> — до ${expires.toLocaleDateString('ru-RU')}<br>(${displayTime})</div>
+    div.innerHTML = \`
+      <div><b>\${item.code}</b> — до \${expires.toLocaleDateString('ru-RU')}<br>(\${displayTime})</div>
       <div style="display:flex; gap:6px;">
-        <button class="edit-btn" data-id="${item.id}">✏</button>
-        <button class="delete-btn" data-id="${item.id}">Удалить</button>
+        <button class="edit-btn" data-id="\${item.id}">✏</button>
+        <button class="delete-btn" data-id="\${item.id}">Удалить</button>
       </div>
-    `;
+    \`;
     list.appendChild(div);
   });
 }
 
-
 document.getElementById('addBtn').addEventListener('click', () => {
-  console.log('🟢 Кнопка "Добавить" нажата');
   addCode();
 });
 
 async function addCode() {
-  console.log('▶ Вызвана функция addCode()');
   const code = document.getElementById('codeInput').value.trim();
   const months = parseInt(document.getElementById('monthsInput').value) || 0;
   const days = parseInt(document.getElementById('daysInput').value) || 0;
@@ -486,15 +479,11 @@ async function addCode() {
   expires.setDate(expires.getDate() + days);
   expires.setMinutes(expires.getMinutes() + minutes);
 
-  console.log('📦 Отправка в Supabase:', { code, expires });
-
   const { error } = await supabase.from('codes').insert({ code, expires_at: expires.toISOString() });
 
   if (error) {
-    console.error('❌ Ошибка при добавлении кода:', error);
-    alert('Ошибка при добавлении кода. Проверь консоль.');
+    alert('Ошибка при добавлении кода.');
   } else {
-    console.log('✅ Код успешно добавлен');
     document.getElementById('codeInput').value = '';
     ['monthsInput','daysInput','minutesInput'].forEach(id => document.getElementById(id).value = '');
     loadCodes();
@@ -562,5 +551,4 @@ function setupInputValidation() {
 
 setupInputValidation();
 loadCodes();
-</script>
-<span id="copylAddress" style="display: inline-block; position: absolute; left: -9999em;"></span></body></html>
+</script></body></html>
