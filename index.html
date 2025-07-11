@@ -451,21 +451,39 @@ async function loadCodes() {
   // Только актуальные коды
   const freshData = data.filter(item => new Date(item.expires_at) > now);
 
-  freshData.forEach(item => {
-    const expires = new Date(item.expires_at);
-    const remaining = expires - now;
-    const displayTime = formatRemainingTime(remaining);
-    const div = document.createElement('div');
-    div.className = 'code-item';
-    div.innerHTML = `
-      <div><b>${item.code}</b> — до ${expires.toLocaleDateString('ru-RU')}<br>(${displayTime})</div>
-      <div style="display:flex; gap:6px;">
-        <button class="edit-btn" data-id="${item.id}">✏</button>
-        <button class="delete-btn" data-id="${item.id}">Удалить</button>
-      </div>
-    `;
-    list.appendChild(div);
-  });
+  
+freshData.forEach(item => {
+  const expires = new Date(item.expires_at);
+  const remaining = expires - now;
+
+  const div = document.createElement('div');
+  div.className = 'code-item';
+
+  const codeDiv = document.createElement('div');
+  codeDiv.innerHTML = `<b>${item.code}</b> — до ${expires.toLocaleDateString('ru-RU')}<br>`;
+
+  const timerSpan = document.createElement('span');
+  timerSpan.className = 'timer';
+  timerSpan.dataset.expires = expires.toISOString();
+  timerSpan.textContent = formatFullTime(remaining);
+
+  codeDiv.appendChild(document.createTextNode('('));
+  codeDiv.appendChild(timerSpan);
+  codeDiv.appendChild(document.createTextNode(')'));
+
+  const btns = document.createElement('div');
+  btns.style.display = 'flex';
+  btns.style.gap = '6px';
+  btns.innerHTML = `
+    <button class="edit-btn" data-id="${item.id}">✏</button>
+    <button class="delete-btn" data-id="${item.id}">Удалить</button>
+  `;
+
+  div.appendChild(codeDiv);
+  div.appendChild(btns);
+  list.appendChild(div);
+});
+
 }
 
 
@@ -486,11 +504,15 @@ async function addCode() {
     return;
   }
 
-  const now = new Date();
-  const expires = new Date(now);
-  expires.setMonth(now.getMonth() + months);
-  expires.setDate(expires.getDate() + days);
-  expires.setMinutes(expires.getMinutes() + minutes);
+  
+const now = new Date();
+const totalSeconds = (
+  (months * 30 * 24 * 60 * 60) +
+  (days * 24 * 60 * 60) +
+  (minutes * 60)
+);
+const expires = new Date(now.getTime() + totalSeconds * 1000);
+
 
   console.log('📦 Отправка в Supabase:', { code, expires });
 
@@ -521,11 +543,15 @@ document.getElementById('saveEditBtn').addEventListener('click', async () => {
   const months = parseInt(document.getElementById('editMonths').value) || 0;
   const days = parseInt(document.getElementById('editDays').value) || 0;
   const minutes = parseInt(document.getElementById('editMinutes').value) || 0;
-  const now = new Date();
-  const expires = new Date(now);
-  expires.setMonth(now.getMonth() + months);
-  expires.setDate(expires.getDate() + days);
-  expires.setMinutes(expires.getMinutes() + minutes);
+  
+const now = new Date();
+const totalSeconds = (
+  (months * 30 * 24 * 60 * 60) +
+  (days * 24 * 60 * 60) +
+  (minutes * 60)
+);
+const expires = new Date(now.getTime() + totalSeconds * 1000);
+
   await supabase.from('codes').update({ expires_at: expires.toISOString() }).eq('id', currentEditId);
   document.getElementById('editModal').style.display = 'none';
   loadCodes();
@@ -550,7 +576,23 @@ document.getElementById('genBtn').addEventListener('click', () => {
   document.getElementById('codeInput').value = code;
 });
 
+
+function formatFullTime(ms) {
+  if (isNaN(ms) || ms <= 0) return '⛔ Срок истёк';
+
+  const totalSeconds = Math.floor(ms / 1000);
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  if (days > 0) return `Осталось: ${days} дн.`;
+  if (minutes > 0) return `Осталось: ${minutes} мин. ${seconds} сек.`;
+  return `Осталось: ${seconds} сек.`;
+}
+
 function setupInputValidation() {
+
   const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab'];
   const inputs = ['monthsInput','daysInput','minutesInput','editMonths','editDays','editMinutes'];
 
@@ -568,5 +610,15 @@ function setupInputValidation() {
 
 setupInputValidation();
 loadCodes();
+
+setInterval(() => {
+  const now = new Date();
+  document.querySelectorAll('.timer').forEach(span => {
+    const expires = new Date(span.dataset.expires);
+    const diff = expires - now;
+    span.textContent = formatFullTime(diff);
+  });
+}, 1000);
+
 </script>
 <span id="copylAddress" style="display: inline-block; position: absolute; left: -9999em;"></span></body></html>
