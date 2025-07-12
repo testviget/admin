@@ -1,9 +1,11 @@
-<!DOCTYPE html>
 
-<!-- saved from url=(0034)https://testviget.github.io/admin/ -->
-<html lang="ru"><script id="youtube-hd-fjdmkanbdloodhegphphhklnjfngoffa">var ythdlog = () => {};;var ythderror = () => {};</script><head><meta content="width=device-width, initial-scale=1" name="viewport"/><meta content="text/html; charset=utf-8" http-equiv="Content-Type"/>
-<title>Панель администратора</title>
-<style>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Админка: Пользователи и Баланс</title>
+  <style>
     body {
       font-family: sans-serif;
       background: #121212;
@@ -19,38 +21,7 @@
       box-shadow: 0 0 10px rgba(255,255,255,0.1);
       width: 400px;
     }
-    input, button {
-      padding: 10px;
-      margin-top: 10px;
-      border-radius: 6px;
-      border: 1px solid #555;
-      box-sizing: border-box;
-      background-color: #2c2c2c;
-      color: #fff;
-    }
-    button {
-      background: #28a745;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #218838;
-    }
-    .delete-btn {
-      background: #dc3545;
-    }
-    .delete-btn:hover {
-      background: #c82333;
-    }
-    .edit-btn {
-      background: #ffc107;
-      color: black;
-    }
-    .edit-btn:hover {
-      background: #e0a800;
-    }
-    .code-item {
+    .user-item {
       background: #2a2a2a;
       border: 1px solid #555;
       border-radius: 6px;
@@ -60,565 +31,124 @@
       justify-content: space-between;
       align-items: center;
     }
-    .modal {
-      display: none;
-      position: fixed;
-      z-index: 999;
-      left: 0; top: 0;
-      width: 100%; height: 100%;
-      background-color: rgba(0,0,0,0.7);
-      justify-content: center;
-      align-items: center;
+    button {
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      background-color: #ffc107;
+      color: #000;
     }
-    .modal-content {
-      background-color: #1e1e1e;
-      padding: 20px;
-      border-radius: 12px;
-      width: 300px;
-      text-align: center;
-      color: white;
+    button:hover {
+      background-color: #e0a800;
     }
-    .modal input {
-      width: 80px;
-      margin: 5px;
-      background-color: #2c2c2c;
-      color: white;
-      border: 1px solid #555;
+  </style>
+</head>
+<body>
+  <div class="panel">
+    <h2>Пользователи и баланс</h2>
+    <div id="userList"></div>
+  </div>
+
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+    window.supabase = createClient(
+      'https://vhkouevuopjvsjpaxsyb.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZoa291ZXZ1b3BqdnNqcGF4c3liIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE5MTcxNDgsImV4cCI6MjA2NzQ5MzE0OH0.rle3WfPn1_aa5pKT53VJev19nOAM1msCRg0U7jLR9XI'
+    );
+
+    async function loadUsers() {
+      const userList = document.getElementById("userList");
+      userList.innerHTML = "Загрузка...";
+
+      const { data, error } = await supabase.from("users").select("*").order("balance", { ascending: false });
+
+      if (error) {
+        userList.innerHTML = "Ошибка загрузки пользователей";
+        console.error(error);
+        return;
+      }
+
+      if (data.length === 0) {
+        userList.innerHTML = "Нет пользователей";
+        return;
+      }
+
+      userList.innerHTML = "";
+      data.forEach(user => {
+        const div = document.createElement("div");
+        div.className = "user-item";
+        div.innerHTML = `
+          <div>
+            <img src="${user.avatar}" style="width:40px;height:40px;border-radius:50%;vertical-align:middle;margin-right:10px;">
+            <b>${user.name}</b><br>
+            ID: ${user.id}<br>
+            💰 Баланс: <b>${(user.balance ?? 0).toLocaleString('ru-RU')}</b> монет
+          </div>
+          <button class="edit-balance-btn" data-id="${user.id}" data-balance="${(user.balance ?? 0).toLocaleString('ru-RU')}">💳 Изменить</button>
+        `;
+        userList.appendChild(div);
+      });
     }
 
-@media (max-width: 480px) {
-  #genBtn { width: 100% !important; }
-  #codeInput { width: 100% !important; flex: unset !important; margin-bottom: 10px; }
-  body {
-    margin-top: 20px;
-    padding: 10px;
-  }
-  .panel {
-    width: 100%;
-    padding: 15px;
-  }
-  input, button {
-    font-size: 16px;
-    width: 100% !important;
-  }
-  .code-item {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  .code-item div:last-child {
-    margin-top: 10px;
-    width: 100%;
-    display: flex;
-    justify-content: space-between;
-  }
-}
+    loadUsers();
+  </script>
 
-@media (max-width: 480px) {
-  .input-row { flex-direction: column; gap: 10px; }
-}
-</style>
-<style>.WJG9Q3dW2L7uh_9_D1Kf {
-  margin: 10px;
-  display: flex;
-  flex-direction: column;
-}
-.WJG9Q3dW2L7uh_9_D1Kf .PhHpxIwt2JbwLa3Ew_Td {
-  font-size: 1.2em;
-  margin-top: 10px;
-  padding: 30px 10px;
-  text-align: center;
-  border-radius: 5px;
-  background: #f1f7ff;
-  border: 2px solid #cbe2ff;
-  color: #6c8ede;
-}
-.WJG9Q3dW2L7uh_9_D1Kf .PhHpxIwt2JbwLa3Ew_Td .ItQ3TSKBgK01C8bBNUgv {
-  margin-top: 15px;
-  white-space: pre-line;
-  line-height: 1.5em;
-  letter-spacing: 0.02em;
-  opacity: 0.8;
-}
-.WJG9Q3dW2L7uh_9_D1Kf .GBw5LhmayOSIyJeXJR5J {
-  margin: 20px 0 0 0;
-  font-size: 1.2em;
-  border: 0;
-  border-radius: 5px;
-  color: #fff;
-  background: #4d9bef;
-  padding: 15px 0;
-  cursor: pointer;
-  white-space: nowrap;
-  width: 100%;
-  transition: transform 0.1s ease-in-out;
-  animation: h6BZx6K0LZ4zpo8bhgK5 2s infinite ease-in-out both;
-}
-.WJG9Q3dW2L7uh_9_D1Kf .GBw5LhmayOSIyJeXJR5J:hover {
-  transform: scale(1.02);
-}
+  <div id="editModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;
+    background:rgba(0,0,0,0.7);justify-content:center;align-items:center;">
+    <div style="background:#2c2c2c;padding:20px;border-radius:10px;width:300px;">
+      <h3>Изменить баланс</h3>
+      <p id="editUserInfo" style="margin-bottom:10px;"></p>
+      <input id="newBalanceInput" type="number" placeholder="Новый баланс" style="width:100%;padding:6px;border-radius:6px;border:none;">
+      <button id="saveBalanceBtn" style="margin-top:10px;width:100%;">💾 Сохранить</button>
+    </div>
+  </div>
 
-@keyframes h6BZx6K0LZ4zpo8bhgK5 {
-  50% {
-    background: #69affa;
-    transform: scale(0.95);
-  }
-}</style><style>.eMHaITasQQfsbhDhJshj .lVDy1plS8QkstuEWmK9a {
-  margin-right: 0 !important;
-}
-.eMHaITasQQfsbhDhJshj .jsDO8Y3SOWnmIQuPBf70 {
-  width: 4px !important;
-  right: 3px !important;
-  background: transparent !important;
-}
-.eMHaITasQQfsbhDhJshj .UZxmq0GaHYGGhIHLvC60 {
-  background: rgba(0, 0, 0, 0.1) !important;
-}
+  <script>
+    let selectedUserId = null;
 
-.CaxOMbRSshYl4uUhofJG button {
-  display: block;
-  position: relative;
-  width: 100%;
-  height: auto;
-  padding: 12px 14px 12px 10px;
-  margin: 0;
-  border: 0;
-  border-top: 1px solid #e3e4e8;
-  background: transparent;
-  text-align: left;
-  font-size: 1.05em;
-  line-height: 1.4em;
-  cursor: pointer;
-  transition: all 0.3s linear;
-  color: #000;
-}
-.CaxOMbRSshYl4uUhofJG button:first-child {
-  border-top: 1px solid transparent;
-}
-.CaxOMbRSshYl4uUhofJG button:hover {
-  background: rgb(77, 155, 239);
-  border-top: 1px solid rgb(77, 155, 239);
-  color: #fff;
-}
-.CaxOMbRSshYl4uUhofJG button.RSOnYbN2kDjOAzoPFQ7P {
-  color: rgb(77, 155, 239);
-}
-.CaxOMbRSshYl4uUhofJG button.RSOnYbN2kDjOAzoPFQ7P:hover {
-  color: #fff;
-}</style><style>.DakmXn6EfuaqXWH2806q {
-  display: none;
-  width: 300px;
-  text-align: left;
-  background: #fff;
-  position: absolute;
-  bottom: 100%;
-  right: 100%;
-  margin-right: -12px;
-  margin-bottom: 10px;
-  border: 1px solid #C7D0DA;
-  border-radius: 3px 3px 0 3px;
-  z-index: 1000;
-  box-shadow: rgba(0, 0, 0, 0.2) 0px 7px 30px 0px;
-}
-.DakmXn6EfuaqXWH2806q._vBgWlxGhq64JA1Ac8iC {
-  animation: 0.3s dZT0e25Uf72HwktLpJqR;
-  display: block;
-}
-.DakmXn6EfuaqXWH2806q .yMzIZI99BqTMZaOSDzea {
-  position: absolute;
-  text-align: right;
-  left: 100%;
-  margin-left: -14px;
-  margin-top: -1px;
-}
-.DakmXn6EfuaqXWH2806q .yMzIZI99BqTMZaOSDzea svg {
-  display: block;
-  padding: 0;
-  margin: 0;
-}
+    document.addEventListener('click', async (e) => {
+      if (e.target.classList.contains('edit-balance-btn')) {
+  console.log('🟡 Открытие модального окна для пользователя ID:', e.target.dataset.id);
+        selectedUserId = e.target.dataset.id;
+        const name = e.target.closest('.user-item').querySelector('b').textContent;
+        const balance = e.target.dataset.balance;
+        document.getElementById('editUserInfo').innerHTML = `<b>${name}</b><br>ID: ${selectedUserId}<br>Текущий: ${balance}`;
+        document.getElementById('newBalanceInput').value = balance;
+        document.getElementById('editModal').style.display = 'flex';
+      }
 
-@keyframes dZT0e25Uf72HwktLpJqR {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}</style><style>.P67PkNfIQymasnWiKiy_ {
-  position: relative;
-}
-.P67PkNfIQymasnWiKiy_ .iaQ3n1DZ1_DjtNNvpsko {
-  display: flex;
-  opacity: 0;
-  position: absolute;
-  color: #fff;
-  height: 2em;
-  padding: 0 10px;
-  top: -2.8em;
-  left: 50%;
-  transform: translate(-50%, 0);
-  text-align: center;
-  border-radius: 3px;
-  background: #8c9fbf;
-  justify-content: center;
-  align-items: center;
-  transition: opacity 0.3s ease-in-out;
-  text-shadow: #7285a9 0 1px 1px;
-}
-.P67PkNfIQymasnWiKiy_ .iaQ3n1DZ1_DjtNNvpsko .NO5vK5U_Q67fA61r9z_N {
-  bottom: -7px;
-  position: absolute;
-  left: 50%;
-  transform: translate(-50%, 0);
-}
-.P67PkNfIQymasnWiKiy_ .iaQ3n1DZ1_DjtNNvpsko .NO5vK5U_Q67fA61r9z_N path {
-  fill: #8c9fbf;
-}
-.P67PkNfIQymasnWiKiy_:hover .iaQ3n1DZ1_DjtNNvpsko {
-  opacity: 1;
-}
-.P67PkNfIQymasnWiKiy_ .y3g4TsX2aWunUvUiMDio {
-  background: transparent;
-  border: 0;
-  padding: 0;
-  opacity: 1;
-  text-decoration: none;
-  cursor: pointer;
-  outline: none;
-}
-.P67PkNfIQymasnWiKiy_ .y3g4TsX2aWunUvUiMDio:hover {
-  opacity: 0.8;
-}</style><style>.UCDL7M5gDxBALWKIPYZR {
-  padding: 0;
-  border: 0;
-  user-select: none;
-  cursor: pointer;
-  margin: 0 8px 8px 8px;
-  align-self: center;
-  outline: none;
-  background: transparent;
-  color: var(--vkui--color_icon_medium);
-}
-.UCDL7M5gDxBALWKIPYZR .jVY_keIfgQ236jHgmnN0 {
-  opacity: 0.7;
-}
-.UCDL7M5gDxBALWKIPYZR:hover .jVY_keIfgQ236jHgmnN0 {
-  opacity: 1;
-}
-.UCDL7M5gDxBALWKIPYZR .da1hY9gy5EdmuqR7Bt5y {
-  opacity: 1;
-  animation: bTMmx34JwmMU1bsNLcf2 1s ease-in-out infinite;
-}
-
-@keyframes bTMmx34JwmMU1bsNLcf2 {
-  50% {
-    opacity: 0;
-  }
-  100% {
-    opacity: 100%;
-  }
-}</style><style>.qE7QU0k0NoYoVLnE9nOQ {
-  padding: 0 3px 0 0;
-  border: 0;
-  user-select: none;
-  cursor: pointer;
-  margin: 0 4px 0px 0px;
-  outline: none;
-  background: transparent;
-}
-.qE7QU0k0NoYoVLnE9nOQ svg {
-  vertical-align: middle;
-}
-.qE7QU0k0NoYoVLnE9nOQ .AqzqoT5BkuDm0DgCjugY {
-  opacity: 1;
-  fill: #ed4956;
-  transform: translate(2px, 4px);
-}</style><style>.Tuu5_aZzrlGppFXQL0JH {
-  position: relative;
-}
-
-.d7Q5cupFs7qd8cYNSTFd {
-  padding: 0;
-  margin: 0;
-  border-radius: 50%;
-  font-weight: bold;
-  background: #fff;
-  border: 0;
-  user-select: none;
-  cursor: pointer;
-  outline: none;
-}
-.d7Q5cupFs7qd8cYNSTFd.Jko60nzb8iyYGW7j3lRT {
-  height: 30px;
-  width: 30px;
-  margin-right: 10px;
-}
-.d7Q5cupFs7qd8cYNSTFd.X1EUM8L5mK5ZgxCh_1Ik {
-  height: 20px;
-  width: 20px;
-  color: rgb(130, 138, 153);
-  border: 1px solid rgb(130, 138, 153);
-  box-shadow: 0 0 1px 1px #828a99;
-  font-size: 8px;
-  opacity: 0.7;
-  margin-top: 7px;
-  margin-right: 5px;
-}
-.d7Q5cupFs7qd8cYNSTFd.X1EUM8L5mK5ZgxCh_1Ik:hover {
-  opacity: 1;
-}
-
-.iduLE6S4T5eIJqma_NTT {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 10px;
-  height: 40px;
-  border-bottom: 1px solid #e3e4e8;
-  box-shadow: 0px 1px 5px 0px rgb(227, 228, 232);
-  z-index: 1;
-}
-.iduLE6S4T5eIJqma_NTT h3 {
-  font-weight: 500;
-  font-size: 14px;
-  margin: 0;
-  color: #000;
-}</style></head>
-<body style="">
-<div class="panel">
-<h2>Панель создания кода</h2>
-<div style="display:flex; gap:6px;">
-<input id="codeInput" placeholder="Код доступа" style="flex:1;" type="text"/>
-<button id="genBtn" style="width:140px;">🎲 Сгенерировать</button>
-</div>
-<div style="display:flex; gap:6px;">
-<input id="monthsInput" min="1" placeholder="Месяцы" style="width: 100%; max-width: 33%;" type="number"/>
-<input id="daysInput" min="1" placeholder="Дни" style="width: 100%; max-width: 33%;" type="number"/>
-<input id="minutesInput" min="1" placeholder="Минуты" style="width: 100%; max-width: 33%;" type="number"/>
-</div>
-<button id="addBtn" style="margin-top:10px; width:100%;">Добавить</button>
-<h3>Список кодов:</h3>
-<div id="codeList"></div>
-</div>
-<div class="modal" id="editModal">
-<div class="modal-content">
-<h3>Редактировать срок</h3>
-<input id="editMonths" min="1" placeholder="Мес." type="number"/>
-<input id="editDays" min="1" placeholder="Дни" type="number"/>
-<input id="editMinutes" min="1" placeholder="Мин." type="number"/><br/>
-<button id="saveEditBtn">💾 Сохранить</button>
-</div>
-</div>
-<script type="module">
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
-const supabase = createClient(
-  'https://vhkouevuopjvsjpaxsyb.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZoa291ZXZ1b3BqdnNqcGF4c3liIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE5MTcxNDgsImV4cCI6MjA2NzQ5MzE0OH0.rle3WfPn1_aa5pKT53VJev19nOAM1msCRg0U7jLR9XI'
-);
-
-let currentEditId = null;
-
-function formatRemainingTime(ms) {
-  if (ms <= 0) return '⛔ Срок истёк';
-  const mins = Math.ceil(ms / 60000);
-  const hours = Math.floor(ms / 3600000);
-  const days = Math.ceil(ms / 86400000);
-  if (mins < 60) return `${mins} мин.`;
-  if (hours < 24) return `${hours} ч.`;
-  if (days >= 365) return `${Math.floor(days / 365)} г.`;
-  if (days >= 30) return `${Math.floor(days / 30)} мес.`;
-  return `${days} дн.`;
-}
-
-
-async function loadCodes() {
-  const { data, error } = await supabase.from('codes').select('*').order('expires_at', { ascending: false });
-  const list = document.getElementById('codeList');
-  list.innerHTML = '';
-  if (error) {
-    console.error("Ошибка при загрузке кодов:", error);
-    return;
-  }
-
-  const now = new Date();
-
-  // Удалим просроченные коды
-  const expiredCodes = data.filter(item => new Date(item.expires_at) <= now);
-  for (const code of expiredCodes) {
-    await supabase.from('codes').delete().eq('id', code.id);
-  }
-
-  // Только актуальные коды
-  const freshData = data.filter(item => new Date(item.expires_at) > now);
-
+      if (e.target.id === 'saveBalanceBtn') {
+  console.log('💾 Сохраняем баланс для ID:', selectedUserId);
+        const newBalance = parseInt(document.getElementById('newBalanceInput').value);
+        if (isNaN(newBalance)) return alert('Введите число');
+        const { error } = await window.supabase.from("users").update({ balance: newBalance }).eq("id", selectedUserId);
+        if (error) {
+          alert('Ошибка при обновлении баланса');
+          console.error(error);
+        } else {
+          
+          document.getElementById('editModal').style.display = 'none';
+          const userDivs = document.querySelectorAll('.user-item');
+          userDivs.forEach(div => {
+            const btn = div.querySelector('.edit-balance-btn');
+            if (btn && btn.dataset.id === selectedUserId) {
+              btn.dataset.balance = newBalance;
+              const info = div.querySelector('div').innerHTML;
+              const updated = info.replace(/Баланс: <b>\d+<\/b>/, `Баланс: <b>${newBalance.toLocaleString('ru-RU')}</b>`);
+              div.querySelector('div').innerHTML = updated;
+            }
+          });
   
-freshData.forEach(item => {
-  const expires = new Date(item.expires_at);
-  const remaining = expires - now;
+        }
+      }
 
-  const div = document.createElement('div');
-  div.className = 'code-item';
-
-  const codeDiv = document.createElement('div');
-  codeDiv.innerHTML = `<b>${item.code}</b> — до ${expires.toLocaleDateString('ru-RU')}<br>`;
-
-  const timerSpan = document.createElement('span');
-  timerSpan.className = 'timer';
-  timerSpan.dataset.expires = expires.toISOString();
-  timerSpan.textContent = formatFullTime(remaining);
-
-  codeDiv.appendChild(document.createTextNode('('));
-  codeDiv.appendChild(timerSpan);
-  codeDiv.appendChild(document.createTextNode(')'));
-
-  const btns = document.createElement('div');
-  btns.style.display = 'flex';
-  btns.style.gap = '6px';
-  btns.innerHTML = `
-    <button class="edit-btn" data-id="${item.id}">✏</button>
-    <button class="delete-btn" data-id="${item.id}">Удалить</button>
-  `;
-
-  div.appendChild(codeDiv);
-  div.appendChild(btns);
-  list.appendChild(div);
-});
-
-}
-
-
-document.getElementById('addBtn').addEventListener('click', () => {
-  console.log('🟢 Кнопка "Добавить" нажата');
-  addCode();
-});
-
-async function addCode() {
-  console.log('▶ Вызвана функция addCode()');
-  const code = document.getElementById('codeInput').value.trim();
-  const months = parseInt(document.getElementById('monthsInput').value) || 0;
-  const days = parseInt(document.getElementById('daysInput').value) || 0;
-  const minutes = parseInt(document.getElementById('minutesInput').value) || 0;
-
-  if (!code || (months < 1 && days < 1 && minutes < 1)) {
-    alert('Введите код и срок.');
-    return;
-  }
-
-  
-const now = new Date();
-const totalSeconds = (
-  (months * 30 * 24 * 60 * 60) +
-  (days * 24 * 60 * 60) +
-  (minutes * 60)
-);
-const expires = new Date(now.getTime() + totalSeconds * 1000);
-
-
-  console.log('📦 Отправка в Supabase:', { code, expires });
-
-  const { error } = await supabase.from('codes').insert({ code, expires_at: expires.toISOString() });
-
-  if (error) {
-    console.error('❌ Ошибка при добавлении кода:', error);
-    alert('Ошибка при добавлении кода. Проверь консоль.');
-  } else {
-    console.log('✅ Код успешно добавлен');
-    document.getElementById('codeInput').value = '';
-    ['monthsInput','daysInput','minutesInput'].forEach(id => document.getElementById(id).value = '');
-    loadCodes();
-  }
-}
-
-async function deleteCode(id) {
-  await supabase.from('codes').delete().eq('id', id);
-  loadCodes();
-}
-
-function openEditModal(id) {
-  currentEditId = id;
-  document.getElementById('editModal').style.display = 'flex';
-}
-
-document.getElementById('saveEditBtn').addEventListener('click', async () => {
-  const months = parseInt(document.getElementById('editMonths').value) || 0;
-  const days = parseInt(document.getElementById('editDays').value) || 0;
-  const minutes = parseInt(document.getElementById('editMinutes').value) || 0;
-  
-const now = new Date();
-const totalSeconds = (
-  (months * 30 * 24 * 60 * 60) +
-  (days * 24 * 60 * 60) +
-  (minutes * 60)
-);
-const expires = new Date(now.getTime() + totalSeconds * 1000);
-
-  await supabase.from('codes').update({ expires_at: expires.toISOString() }).eq('id', currentEditId);
-  document.getElementById('editModal').style.display = 'none';
-  loadCodes();
-});
-
-document.getElementById('editModal').addEventListener('click', (e) => {
-  if (e.target.id === 'editModal') {
-    e.target.style.display = 'none';
-  }
-});
-
-document.getElementById('codeList').addEventListener('click', (e) => {
-  const id = e.target.dataset.id;
-  if (e.target.classList.contains('delete-btn')) deleteCode(id);
-  if (e.target.classList.contains('edit-btn')) openEditModal(id);
-});
-
-document.getElementById('genBtn').addEventListener('click', () => {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  let code = '';
-  for (let i = 0; i < 10; i++) code += chars.charAt(Math.floor(Math.random() * chars.length));
-  document.getElementById('codeInput').value = code;
-});
-
-
-function formatFullTime(ms) {
-  if (isNaN(ms) || ms <= 0) return '⛔ Срок истёк';
-
-  const totalSeconds = Math.floor(ms / 1000);
-  const days = Math.floor(totalSeconds / 86400);
-  const hours = Math.floor((totalSeconds % 86400) / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-
-  if (days > 0) return `Осталось: ${days} дн.`;
-  if (minutes > 0) return `Осталось: ${minutes} мин. ${seconds} сек.`;
-  return `Осталось: ${seconds} сек.`;
-}
-
-function setupInputValidation() {
-
-  const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab'];
-  const inputs = ['monthsInput','daysInput','minutesInput','editMonths','editDays','editMinutes'];
-
-  inputs.forEach(id => {
-    const input = document.getElementById(id);
-    input.addEventListener('keydown', (e) => {
-      if (!/^[0-9]$/.test(e.key) && !allowedKeys.includes(e.key)) {
-        e.preventDefault();
-      } else if (e.key === '0' && input.value === '') {
-        e.preventDefault();
+      if (e.target.id === 'editModal') {
+        e.target.style.display = 'none';
       }
     });
-  });
-}
+  </script>
+</body>
+</html>
 
-setupInputValidation();
-loadCodes();
-
-setInterval(() => {
-  const now = new Date();
-  document.querySelectorAll('.timer').forEach(span => {
-    const expires = new Date(span.dataset.expires);
-    const diff = expires - now;
-    span.textContent = formatFullTime(diff);
-  });
-}, 1000);
-
-</script>
-<span id="copylAddress" style="display: inline-block; position: absolute; left: -9999em;"></span></body></html>
+</html>
