@@ -57,7 +57,18 @@
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZoa291ZXZ1b3BqdnNqcGF4c3liIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE5MTcxNDgsImV4cCI6MjA2NzQ5MzE0OH0.rle3WfPn1_aa5pKT53VJev19nOAM1msCRg0U7jLR9XI'
     );
 
-    async function loadUsers() {
+    
+function getCoinWord(count) {
+  const n = Math.abs(count) % 100;
+  const n1 = n % 10;
+  if (n > 10 && n < 20) return 'монет';
+  if (n1 > 1 && n1 < 5) return 'монеты';
+  if (n1 === 1) return 'монета';
+  return 'монет';
+}
+
+
+async function loadUsers() {
       const userList = document.getElementById("userList");
       userList.innerHTML = "Загрузка...";
 
@@ -83,7 +94,7 @@
             <img src="${user.avatar}" style="width:40px;height:40px;border-radius:50%;vertical-align:middle;margin-right:10px;">
             <b>${user.name}</b><br>
             ID: ${user.id}<br>
-            💰 Баланс: <b>${(user.balance ?? 0).toLocaleString('ru-RU')}</b> монет
+            💰 Баланс: <b>${(user.balance ?? 0).toLocaleString('ru-RU')}</b> ${getCoinWord(user.balance ?? 0)}
           </div>
           <button class="edit-balance-btn" data-id="${user.id}" data-balance="${(user.balance ?? 0).toLocaleString('ru-RU')}">💳 Изменить</button>
         `;
@@ -146,7 +157,7 @@
                     <img src="${updatedUser.avatar}" style="width:40px;height:40px;border-radius:50%;vertical-align:middle;margin-right:10px;">
                     <b>${updatedUser.name}</b><br>
                     ID: ${updatedUser.id}<br>
-                    💰 Баланс: <b>${(updatedUser.balance ?? 0).toLocaleString('ru-RU')}</b> монет
+                    💰 Баланс: <b>${(user.balance ?? 0).toLocaleString('ru-RU')}</b> ${getCoinWord(user.balance ?? 0)}
                   </div>
                   <button class="edit-balance-btn" data-id="${updatedUser.id}" data-balance="${(updatedUser.balance ?? 0).toLocaleString('ru-RU')}">💳 Изменить</button>
                 `;
