@@ -99,7 +99,7 @@
     <div style="background:#2c2c2c;padding:20px;border-radius:10px;width:300px;">
       <h3>Изменить баланс</h3>
       <p id="editUserInfo" style="margin-bottom:10px;"></p>
-      <input id="newBalanceInput" type="number" placeholder="Новый баланс" style="width:100%;padding:6px;border-radius:6px;border:none;">
+      <input id="newBalanceInput" type="number" placeholder="Новый баланс" style="width:100%;padding:6px;border-radius:6px;border:none;" min="0">
       <button id="saveBalanceBtn" style="margin-top:10px;width:100%;">💾 Сохранить</button>
     </div>
   </div>
@@ -129,16 +129,30 @@
         } else {
           
           document.getElementById('editModal').style.display = 'none';
-          const userDivs = document.querySelectorAll('.user-item');
-          userDivs.forEach(div => {
-            const btn = div.querySelector('.edit-balance-btn');
-            if (btn && btn.dataset.id === selectedUserId) {
-              btn.dataset.balance = newBalance;
-              const info = div.querySelector('div').innerHTML;
-              const updated = info.replace(/Баланс: <b>\d+<\/b>/, `Баланс: <b>${newBalance.toLocaleString('ru-RU')}</b>`);
-              div.querySelector('div').innerHTML = updated;
-            }
-          });
+          // 🔁 Обновим блок конкретного пользователя
+          const { data: updatedUser } = await window.supabase
+            .from("users")
+            .select("*")
+            .eq("id", selectedUserId)
+            .single();
+
+          if (updatedUser) {
+            const userDivs = document.querySelectorAll('.user-item');
+            userDivs.forEach(div => {
+              const btn = div.querySelector('.edit-balance-btn');
+              if (btn && btn.dataset.id === selectedUserId) {
+                div.innerHTML = `
+                  <div>
+                    <img src="${updatedUser.avatar}" style="width:40px;height:40px;border-radius:50%;vertical-align:middle;margin-right:10px;">
+                    <b>${updatedUser.name}</b><br>
+                    ID: ${updatedUser.id}<br>
+                    💰 Баланс: <b>${(updatedUser.balance ?? 0).toLocaleString('ru-RU')}</b> монет
+                  </div>
+                  <button class="edit-balance-btn" data-id="${updatedUser.id}" data-balance="${(updatedUser.balance ?? 0).toLocaleString('ru-RU')}">💳 Изменить</button>
+                `;
+              }
+            });
+          }
   
         }
       }
@@ -148,6 +162,29 @@
       }
     });
   </script>
+<script>
+  document.getElementById('newBalanceInput').addEventListener('input', function () {
+    if (this.value.includes('-')) {
+      this.value = this.value.replace('-', '');
+    }
+  });
+</script>
+<script>
+const input = document.getElementById('newBalanceInput');
+
+// Блокируем всё, кроме цифр и навигации
+input.addEventListener('keydown', function (e) {
+  const allowedKeys = ['Backspace', 'ArrowLeft', 'ArrowRight', 'Tab', 'Delete'];
+  if (!/^[0-9]$/.test(e.key) && !allowedKeys.includes(e.key)) {
+    e.preventDefault();
+  }
+});
+
+// Удаляем все нецифры при вставке
+input.addEventListener('input', function () {
+  this.value = this.value.replace(/\D/g, '');
+});
+</script>
 </body>
 </html>
 
