@@ -3,13 +3,12 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Админка: Пользователи и Баланс</title>
+  <title>Админка с нуля</title>
   <style>
     body {
       font-family: sans-serif;
       background: #121212;
-      color: #ffffff;
+      color: #fff;
       display: flex;
       justify-content: center;
       margin-top: 40px;
@@ -18,12 +17,11 @@
       background: #1e1e1e;
       padding: 20px;
       border-radius: 12px;
+      width: 420px;
       box-shadow: 0 0 10px rgba(255,255,255,0.1);
-      width: 400px;
     }
     .user-item {
       background: #2a2a2a;
-      border: 1px solid #555;
       border-radius: 6px;
       padding: 10px;
       margin-top: 10px;
@@ -32,59 +30,61 @@
       align-items: center;
     }
     button {
+      background: #ffc107;
+      color: #000;
+      border: none;
       padding: 6px 10px;
       border-radius: 6px;
-      border: none;
       cursor: pointer;
-      background-color: #ffc107;
-      color: #000;
     }
     button:hover {
-      background-color: #e0a800;
+      background: #e0a800;
     }
   </style>
 </head>
 <body>
   <div class="panel">
     <h2>Пользователи и баланс</h2>
-    <div id="userList"></div>
+    <div id="userList">Загрузка...</div>
+  </div>
+
+  <div id="modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;
+    background:rgba(0,0,0,0.7);justify-content:center;align-items:center;">
+    <div style="background:#2c2c2c;padding:20px;border-radius:10px;width:300px;">
+      <h3>Изменить баланс</h3>
+      <p id="userInfo"></p>
+      <input id="newBalance" type="number" min="0" placeholder="Новый баланс"
+     style="width:100%;padding:6px;border-radius:6px;border:none;"
+     oninput="this.value = this.value.replace(/[^\d]/g, '')">
+      <button id="saveBtn" style="margin-top:10px;width:100%;">💾 Сохранить</button>
+    </div>
   </div>
 
   <script type="module">
     import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
-    window.supabase = createClient(
+    const supabase = createClient(
       'https://vhkouevuopjvsjpaxsyb.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZoa291ZXZ1b3BqdnNqcGF4c3liIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE5MTcxNDgsImV4cCI6MjA2NzQ5MzE0OH0.rle3WfPn1_aa5pKT53VJev19nOAM1msCRg0U7jLR9XI'
     );
 
-    
-function getCoinWord(count) {
-  const n = Math.abs(count) % 100;
-  const n1 = n % 10;
-  if (n > 10 && n < 20) return 'монет';
-  if (n1 > 1 && n1 < 5) return 'монеты';
-  if (n1 === 1) return 'монета';
-  return 'монет';
-}
+    function getCoinWord(n) {
+      const num = Math.abs(n) % 100;
+      const num1 = num % 10;
+      if (num > 10 && num < 20) return "монет";
+      if (num1 > 1 && num1 < 5) return "монеты";
+      if (num1 == 1) return "монета";
+      return "монет";
+    }
 
+    let currentId = null;
 
-async function loadUsers() {
+    async function loadUsers() {
       const userList = document.getElementById("userList");
-      userList.innerHTML = "Загрузка...";
-
       const { data, error } = await supabase.from("users").select("*").order("balance", { ascending: false });
-
-      if (error) {
-        userList.innerHTML = "Ошибка загрузки пользователей";
-        console.error(error);
+      if (error || !data) {
+        userList.innerHTML = "Ошибка загрузки";
         return;
       }
-
-      if (data.length === 0) {
-        userList.innerHTML = "Нет пользователей";
-        return;
-      }
-
       userList.innerHTML = "";
       data.forEach(user => {
         const div = document.createElement("div");
@@ -92,111 +92,57 @@ async function loadUsers() {
         div.innerHTML = `
           <div>
             <img src="${user.avatar}" style="width:40px;height:40px;border-radius:50%;vertical-align:middle;margin-right:10px;">
-            <b>${user.name}</b><br>
-            ID: ${user.id}<br>
-            💰 Баланс: <b>${(user.balance ?? 0).toLocaleString('ru-RU')}</b> ${getCoinWord(user.balance ?? 0)}
+            <b>${user.name}</b><br>ID: ${user.id}<br>
+            💰 Баланс: <b>${user.balance.toLocaleString('ru-RU')}</b> ${getCoinWord(user.balance)}
           </div>
-          <button class="edit-balance-btn" data-id="${user.id}" data-balance="${(user.balance ?? 0).toLocaleString('ru-RU')}">💳 Изменить</button>
+          <button data-id="${user.id}" data-name="${user.name}" data-balance="${user.balance}" class="edit-btn">💳 Изменить</button>
         `;
         userList.appendChild(div);
       });
     }
 
-    loadUsers();
-  </script>
-
-  <div id="editModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;
-    background:rgba(0,0,0,0.7);justify-content:center;align-items:center;">
-    <div style="background:#2c2c2c;padding:20px;border-radius:10px;width:300px;">
-      <h3>Изменить баланс</h3>
-      <p id="editUserInfo" style="margin-bottom:10px;"></p>
-      <input id="newBalanceInput" type="number" placeholder="Новый баланс" style="width:100%;padding:6px;border-radius:6px;border:none;" min="0">
-      <button id="saveBalanceBtn" style="margin-top:10px;width:100%;">💾 Сохранить</button>
-    </div>
-  </div>
-
-  <script>
-    let selectedUserId = null;
-
-    document.addEventListener('click', async (e) => {
-      if (e.target.classList.contains('edit-balance-btn')) {
-  console.log('🟡 Открытие модального окна для пользователя ID:', e.target.dataset.id);
-        selectedUserId = e.target.dataset.id;
-        const name = e.target.closest('.user-item').querySelector('b').textContent;
-        const balance = e.target.dataset.balance;
-        document.getElementById('editUserInfo').innerHTML = `<b>${name}</b><br>ID: ${selectedUserId}<br>Текущий: ${balance}`;
-        document.getElementById('newBalanceInput').value = balance;
-        document.getElementById('editModal').style.display = 'flex';
+    document.addEventListener("click", async (e) => {
+      if (e.target.classList.contains("edit-btn")) {
+        currentId = e.target.dataset.id;
+        document.getElementById("userInfo").innerHTML =
+          `<b>${e.target.dataset.name}</b><br>ID: ${currentId}<br>Баланс: ${e.target.dataset.balance}`;
+        document.getElementById("newBalance").value = "";
+        document.getElementById("modal").style.display = "flex";
       }
 
-      if (e.target.id === 'saveBalanceBtn') {
-  console.log('💾 Сохраняем баланс для ID:', selectedUserId);
-        const newBalance = parseInt(document.getElementById('newBalanceInput').value);
-        if (isNaN(newBalance)) return alert('Введите число');
-        const { error } = await window.supabase.from("users").update({ balance: newBalance }).eq("id", selectedUserId);
-        if (error) {
-          alert('Ошибка при обновлении баланса');
-          console.error(error);
-        } else {
-          
-          document.getElementById('editModal').style.display = 'none';
-          // 🔁 Обновим блок конкретного пользователя
-          const { data: updatedUser } = await window.supabase
-            .from("users")
-            .select("*")
-            .eq("id", selectedUserId)
-            .single();
+      if (e.target.id === "saveBtn") {
+        const val = parseInt(document.getElementById("newBalance").value);
+        if (isNaN(val)) return alert("Введите корректное число");
 
-          if (updatedUser) {
-            const userDivs = document.querySelectorAll('.user-item');
-            userDivs.forEach(div => {
-              const btn = div.querySelector('.edit-balance-btn');
-              if (btn && btn.dataset.id === selectedUserId) {
-                div.innerHTML = `
-                  <div>
-                    <img src="${updatedUser.avatar}" style="width:40px;height:40px;border-radius:50%;vertical-align:middle;margin-right:10px;">
-                    <b>${updatedUser.name}</b><br>
-                    ID: ${updatedUser.id}<br>
-                    💰 Баланс: <b>${(user.balance ?? 0).toLocaleString('ru-RU')}</b> ${getCoinWord(user.balance ?? 0)}
-                  </div>
-                  <button class="edit-balance-btn" data-id="${updatedUser.id}" data-balance="${(updatedUser.balance ?? 0).toLocaleString('ru-RU')}">💳 Изменить</button>
-                `;
-              }
-            });
-          }
-  
+        await supabase.from("users").update({ balance: val }).eq("id", currentId);
+
+        const { data: updated } = await supabase.from("users").select("*").eq("id", currentId).single();
+        if (updated) {
+          const userItems = document.querySelectorAll(".user-item");
+          userItems.forEach(block => {
+            const btn = block.querySelector("button");
+            if (btn && btn.dataset.id === currentId) {
+              block.innerHTML = `
+                <div>
+                  <img src="${updated.avatar}" style="width:40px;height:40px;border-radius:50%;vertical-align:middle;margin-right:10px;">
+                  <b>${updated.name}</b><br>ID: ${updated.id}<br>
+                  💰 Баланс: <b>${updated.balance.toLocaleString('ru-RU')}</b> ${getCoinWord(updated.balance)}
+                </div>
+                <button data-id="${updated.id}" data-name="${updated.name}" data-balance="${updated.balance}" class="edit-btn">💳 Изменить</button>
+              `;
+            }
+          });
         }
+
+        document.getElementById("modal").style.display = "none";
       }
 
-      if (e.target.id === 'editModal') {
-        e.target.style.display = 'none';
+      if (e.target.id === "modal") {
+        e.target.style.display = "none";
       }
     });
+
+    loadUsers();
   </script>
-<script>
-  document.getElementById('newBalanceInput').addEventListener('input', function () {
-    if (this.value.includes('-')) {
-      this.value = this.value.replace('-', '');
-    }
-  });
-</script>
-<script>
-const input = document.getElementById('newBalanceInput');
-
-// Блокируем всё, кроме цифр и навигации
-input.addEventListener('keydown', function (e) {
-  const allowedKeys = ['Backspace', 'ArrowLeft', 'ArrowRight', 'Tab', 'Delete'];
-  if (!/^[0-9]$/.test(e.key) && !allowedKeys.includes(e.key)) {
-    e.preventDefault();
-  }
-});
-
-// Удаляем все нецифры при вставке
-input.addEventListener('input', function () {
-  this.value = this.value.replace(/\D/g, '');
-});
-</script>
 </body>
-</html>
-
 </html>
